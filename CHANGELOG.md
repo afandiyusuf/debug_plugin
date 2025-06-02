@@ -1,3 +1,8 @@
+## 0.0.3
+
+* Properly configured plugin as Dart-only using the implements mechanism
+* Fixed platform support configuration
+
 ## 0.0.2
 
 * Updated to be a Dart-only plugin
