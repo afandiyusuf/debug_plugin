@@ -1,6 +1,6 @@
 name: debug_plugin
 description: "A lightweight Flutter plugin for in-app debugging that provides logging, search functionality, and a built-in debug console with persistent storage using SharedPreferences."
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/afandiyusuf/debug_plugin
 repository: https://github.com/afandiyusuf/debug_plugin
 issue_tracker: https://github.com/afandiyusuf/debug_plugin/issues
@@ -38,13 +38,12 @@ flutter:
   plugin:
     platforms:
       android:
+        dartPluginClass: DebugPlugin
         package: com.afandiyusuf.debug_plugin
-        pluginClass: DebugPlugin
       ios:
-        pluginClass: DebugPlugin
+        dartPluginClass: DebugPlugin
       web:
-        pluginClass: DebugPluginWeb
-        fileName: debug_plugin_web.dart
+        dartPluginClass: DebugPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

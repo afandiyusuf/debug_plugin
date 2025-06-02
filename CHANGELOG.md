@@ -1,3 +1,9 @@
+## 0.0.2
+
+* Updated to be a Dart-only plugin
+* Fixed platform configuration in pubspec.yaml
+* Added MIT License
+
 ## 0.0.1
 
 * Initial release of debug_plugin
