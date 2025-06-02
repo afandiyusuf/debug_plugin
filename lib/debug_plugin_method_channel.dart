@@ -1,18 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+// We no longer need this file as we've moved the implementation to the platform interface
+// This file is kept for backward compatibility and future platform-specific implementations
 
-import 'debug_plugin_platform_interface.dart';
-
-/// An implementation of [DebugPluginPlatform] that uses method channels.
-class MethodChannelDebugPlugin extends DebugPluginPlatform {
-  /// The method channel used to interact with the native platform.
-  @visibleForTesting
-  final methodChannel = const MethodChannel('debug_plugin');
-
-  @override
-  Future<String?> getPlatformVersion() async {
-    final version =
-        await methodChannel.invokeMethod<String>('getPlatformVersion');
-    return version;
-  }
-}
+// The actual implementation is now in debug_plugin_platform_interface.dart

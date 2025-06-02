@@ -1,11 +1,22 @@
-import 'package:hive/hive.dart';
-
-part 'log_object.g.dart';
-
-@HiveType(typeId: 0)
-class LogObject extends HiveObject {
-  @HiveField(0)
+class LogObject {
   String? feature;
-  @HiveField(1)
   String? log;
+  
+  LogObject({this.feature, this.log});
+  
+  // Convert to JSON for SharedPreferences storage
+  Map<String, dynamic> toJson() {
+    return {
+      'feature': feature,
+      'log': log,
+    };
+  }
+  
+  // Create LogObject from JSON
+  factory LogObject.fromJson(Map<String, dynamic> json) {
+    return LogObject(
+      feature: json['feature'],
+      log: json['log'],
+    );
+  }
 }

@@ -10,20 +10,16 @@ import 'package:flutter/widgets.dart';
 import 'debug_plugin_platform_interface.dart';
 
 class DebugPlugin {
-  Future<String?> getPlatformVersion() {
-    return DebugPluginPlatform.instance.getPlatformVersion();
-  }
-
-  showDebugScreen(BuildContext context) {
+  Future<void> showDebugScreen(BuildContext context) async {
     return DebugPluginPlatform.instance.showDebugScreen(context);
   }
 
-  logDebug(String feature, String log) async {
-    feature = DateTime.now().toIso8601String().toString() + " | " + feature;
+  Future<void> logDebug(String feature, String log) async {
+    feature = DateTime.now().toIso8601String() + " | " + feature;
     return DebugPluginPlatform.instance.logDebug(feature, log);
   }
 
-  initialize() async {
+  Future<void> initialize() async {
     return DebugPluginPlatform.instance.initialize();
   }
 }

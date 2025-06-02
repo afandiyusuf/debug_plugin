@@ -1,12 +1,11 @@
+import 'dart:convert';
+
 import 'package:debug_plugin/model/log_object.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'debug_plugin_method_channel.dart';
+// Implementation is now included in this file
 
 abstract class DebugPluginPlatform extends PlatformInterface {
   /// Constructs a DebugPluginPlatform.
@@ -29,22 +28,39 @@ abstract class DebugPluginPlatform extends PlatformInterface {
     _instance = instance;
   }
 
+  Future<void> initialize() async {
+    // Ensure shared preferences is ready
+    await SharedPreferences.getInstance();
+  }
+
+  Future<void> showDebugScreen(BuildContext context);
+
+  Future<void> logDebug(String feature, String log);
+
+  Future<void> removeAllDebug();
+
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
+}
 
-  initialize() async {
-    final dir = await getApplicationDocumentsDirectory();
-    await Hive.initFlutter();
-    Hive.registerAdapter(LogObjectAdapter());
-    await Hive.openBox<LogObject>('logBox');
-  }
+class MethodChannelDebugPlugin extends DebugPluginPlatform {
+  @override
+  Future<void> showDebugScreen(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> logsJson = prefs.getStringList('logs') ?? [];
 
-  showDebugScreen(BuildContext context) {
-    var box = Hive.box<LogObject>("logBox");
-    List<LogObject> logs = box.values.toList();
-    //invert the list
+    // Parse JSON strings to LogObject instances
+    List<LogObject> logs = logsJson.map((jsonStr) {
+      Map<String, dynamic> json = jsonDecode(jsonStr);
+      return LogObject.fromJson(json);
+    }).toList();
+
+    // Reverse to show newest first
     logs = logs.reversed.toList();
+
+    // Store original logs for filtering
+    List<LogObject> allLogs = List.from(logs);
 
     showDialog(
         context: context,
@@ -58,29 +74,35 @@ abstract class DebugPluginPlatform extends PlatformInterface {
                     children: [
                       Row(
                         children: [
-                          Text("Debug Search"),
+                          const Text("Debug Search"),
                           Expanded(
                             child: TextField(
                               onChanged: (value) {
-                                logs = box.values
-                                    .where((element) =>
-                                        element.feature!
-                                            .toLowerCase()
-                                            .contains(value.toLowerCase()) ||
-                                        element.log!
-                                            .toLowerCase()
-                                            .contains(value.toLowerCase()))
-                                    .toList();
+                                if (value.isEmpty) {
+                                  logs = List.from(allLogs);
+                                } else {
+                                  logs = allLogs
+                                      .where((element) =>
+                                          element.feature!
+                                              .toLowerCase()
+                                              .contains(value.toLowerCase()) ||
+                                          element.log!
+                                              .toLowerCase()
+                                              .contains(value.toLowerCase()))
+                                      .toList();
+                                }
                                 setState(() {});
                               },
                             ),
                           ),
-                          SizedBox(
+                          const SizedBox(
                             width: 20,
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              removeAllDebug();
+                            onPressed: () async {
+                              await removeAllDebug();
+                              logs = [];
+                              allLogs = [];
                               setState(() {});
                             },
                             child: Text("Clear All"),
@@ -96,10 +118,7 @@ abstract class DebugPluginPlatform extends PlatformInterface {
                                 SizedBox(
                                     width: MediaQuery.of(context).size.width,
                                     child: Text(
-                                      "|" +
-                                          logs[i].feature! +
-                                          "|" +
-                                          logs[i].log!,
+                                      "|  ${logs[i].feature!} | ${logs[i].log!}",
                                       softWrap: true,
                                     )),
                               ],
@@ -114,16 +133,22 @@ abstract class DebugPluginPlatform extends PlatformInterface {
         });
   }
 
-  logDebug(String feature, String log) {
-    var box = Hive.box<LogObject>("logBox");
-    var logDebug = new LogObject();
-    logDebug.feature = feature;
-    logDebug.log = log;
-    box.add(logDebug);
+  Future<void> logDebug(String feature, String log) async {
+    final prefs = await SharedPreferences.getInstance();
+    final logDebug = LogObject(feature: feature, log: log);
+
+    // Get existing logs
+    List<String> logsJson = prefs.getStringList('logs') ?? [];
+
+    // Add new log as JSON string
+    logsJson.add(jsonEncode(logDebug.toJson()));
+
+    // Save back to SharedPreferences
+    await prefs.setStringList('logs', logsJson);
   }
 
-  removeAllDebug() {
-    var box = Hive.box<LogObject>("logBox");
-    box.clear();
+  Future<void> removeAllDebug() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('logs');
   }
 }
